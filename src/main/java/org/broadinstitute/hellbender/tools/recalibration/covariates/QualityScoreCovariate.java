@@ -9,12 +9,13 @@ import org.broadinstitute.hellbender.utils.read.ReadUtils;
 /**
  * The Reported Quality Score covariate.
  */
-
-public class QualityScoreCovariate implements Covariate {
+public final class QualityScoreCovariate implements Covariate {
 
     // Initialize any member variables using the command-line arguments passed to the walkers
     @Override
-    public void initialize(final RecalibrationArgumentCollection RAC) {}
+    public void initialize(final RecalibrationArgumentCollection RAC) {
+        //nothing to initialize
+    }
 
     @Override
     public void recordValues(final SAMRecord read, final ReadCovariates values) {

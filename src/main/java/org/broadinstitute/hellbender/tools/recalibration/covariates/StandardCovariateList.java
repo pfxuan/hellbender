@@ -4,18 +4,20 @@ import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.hellbender.tools.recalibration.ReadCovariates;
 import org.broadinstitute.hellbender.tools.recalibration.RecalibrationArgumentCollection;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
- * We always use the same covariates - this is the list.
+ * Represents the list of standard BQSR covariates.
+ *
+ * Note: the first two covariates ({@link ReadGroupCovariate} and {@link QualityScoreCovariate})
+ * are special in the way that they are represented in the BQSR recalibration table.
+ *
+ * The remaining covariates are called "additional covariates".
  */
 public final class StandardCovariateList implements Iterable<Covariate>{
 
-    private final Covariate readGroupCovariate;
-    private final Covariate qualityScoreCovariate;
+    private final ReadGroupCovariate readGroupCovariate;
+    private final QualityScoreCovariate qualityScoreCovariate;
     private final List<Covariate> additionalCovariates;
     private final List<Covariate> allCovariates;
 
@@ -29,6 +31,9 @@ public final class StandardCovariateList implements Iterable<Covariate>{
         this.allCovariates = Arrays.asList(readGroupCovariate, qualityScoreCovariate, contextCovariate, cycleCovariate);
     }
 
+    /**
+     * Returns the list of simple class names of standard covariates.
+     */
     public List<String> getStandardCovariateClassNames() {
         final List<String> names = new ArrayList<>(allCovariates.size());
         for ( final Covariate cov : allCovariates) {
@@ -37,26 +42,34 @@ public final class StandardCovariateList implements Iterable<Covariate>{
         return names;
     }
 
+    /**
+     * Returns the size of the list.
+     */
     public final int size(){
         return allCovariates.size();
     }
 
+    /**
+     * Returns a new iterator over all covariates in this list.
+     */
     @Override
     public Iterator<Covariate> iterator() {
         return allCovariates.iterator();
     }
 
-
-    public Covariate getReadGroupCovariate() {
+    public ReadGroupCovariate getReadGroupCovariate() {
         return readGroupCovariate;
     }
 
-    public Covariate getQualityScoreCovariate() {
+    public QualityScoreCovariate getQualityScoreCovariate() {
         return qualityScoreCovariate;
     }
 
+    /**
+     * returns an unmodifiable view of the additional covariates stored in this list.
+     */
     public Iterable<Covariate> getAdditionalCovariates() {
-        return additionalCovariates;
+        return Collections.unmodifiableList(additionalCovariates);
     }
 
     /**
@@ -70,6 +83,8 @@ public final class StandardCovariateList implements Iterable<Covariate>{
 
     /**
      * Get the covariate by the index.
+     * @throws IndexOutOfBoundsException if the index is out of range
+     *         (<tt>index &lt; 0 || index &gt;= size()</tt>)
      */
     public Covariate get(int covIndex) {
         return allCovariates.get(covIndex);
@@ -88,33 +103,31 @@ public final class StandardCovariateList implements Iterable<Covariate>{
         return -1;
     }
 
-    private void recordValueInStorage(Covariate cov, SAMRecord read, ReadCovariates resultsStorage) {
-        int index = indexByClass(cov.getClass());
-        resultsStorage.setCovariateIndex(index);
-        cov.recordValues(read, resultsStorage);
-    }
-
+    /**
+     * For each covariate compute the values for all positions in this read and
+     * record the values in the provided storage object.
+      */
     public void recordAllValuesInStorage(SAMRecord read, ReadCovariates resultsStorage) {
-        // Loop through the list of requested covariates and compute the values of each covariate for all positions in this read
-        for(Covariate cov : this) {
-            recordValueInStorage(cov, read, resultsStorage);
-        }
+        forEach(cov -> {
+            final int index = indexByClass(cov.getClass());
+            resultsStorage.setCovariateIndex(index);
+            cov.recordValues(read, resultsStorage);
+        });
     }
 
-    public StandardCovariateList initializeAll(RecalibrationArgumentCollection rac) {
-        for (Covariate cov : allCovariates){
-            cov.initialize(rac);
-        }
-        return this;
+    /**
+     * Initializes all covariates in the list using the argument collection.
+     */
+    public void initializeAll(RecalibrationArgumentCollection rac) {
+        allCovariates.forEach(c -> c.initialize(rac));
     }
 
+    /**
+     * Retrieves a covariate by the parsed name {@link Covariate#parseNameForReport()} or null
+     * if no covariate with that name exists in the list.
+     */
     public Covariate getCovariateByParsedName(String covName) {
-        for (Covariate cov : allCovariates){
-            if (cov.parseNameForReport().equals(covName)) {
-                return cov;
-            }
-        }
-        throw new IllegalStateException("unknown covariate " + covName);
+        return allCovariates.stream().filter(cov -> cov.parseNameForReport().equals(covName)).findFirst().orElse(null);
     }
 
 }

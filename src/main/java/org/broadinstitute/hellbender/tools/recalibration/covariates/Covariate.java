@@ -75,11 +75,11 @@ public interface Covariate {
     }
 
     /**
-     * Returns the names of the covariate, which is the simple class name withouit the "Covariate" part;
-     * @return
+     * Returns the names of the covariate, which is the simple class name without the "Covariate" part;
      */
     default String parseNameForReport() {
         return getClass().getSimpleName().split("Covariate")[0];
     }
+
 }
 

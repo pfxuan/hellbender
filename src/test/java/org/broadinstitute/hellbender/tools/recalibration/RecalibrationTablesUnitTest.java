@@ -21,7 +21,8 @@ public final class RecalibrationTablesUnitTest extends BaseTest {
 
     @BeforeMethod
     private void makeTables() {
-        covariates = new StandardCovariateList().initializeAll(new RecalibrationArgumentCollection());
+        covariates = new StandardCovariateList();
+        covariates.initializeAll(new RecalibrationArgumentCollection());
         tables = new RecalibrationTables(covariates, numReadGroups);
         fillTable(tables);
     }

@@ -4,8 +4,8 @@ import htsjdk.tribble.Feature;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.engine.FeatureInput;
-import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.tools.recalibration.covariates.*;
+import org.broadinstitute.hellbender.tools.recalibration.covariates.Covariate;
+import org.broadinstitute.hellbender.tools.recalibration.covariates.StandardCovariateList;
 import org.broadinstitute.hellbender.utils.commandline.AdvancedOption;
 import org.broadinstitute.hellbender.utils.commandline.Gather;
 import org.broadinstitute.hellbender.utils.commandline.HiddenOption;
@@ -20,7 +20,7 @@ import java.util.*;
  * This set of arguments will also be passed to the constructor of every Covariate when it is instantiated.
  */
 
-public class RecalibrationArgumentCollection implements ArgumentCollectionDefinition {
+public final class RecalibrationArgumentCollection implements ArgumentCollectionDefinition {
 
     /**
      * This algorithm treats every reference mismatch as an indication of error. However, real genetic variation is expected to mismatch the reference,

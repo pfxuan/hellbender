@@ -10,7 +10,6 @@ import java.util.*;
 /**
  * Utility class to facilitate base quality score recalibration.
  */
-
 public final class RecalibrationTables implements Iterable<NestedIntegerArray<RecalDatum>>{
     private final int qualDimension;
     private final int eventDimension = EventType.values().length;

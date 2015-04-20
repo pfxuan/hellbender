@@ -12,7 +12,10 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 
-public class BQSRGatherer extends Gatherer {
+/**
+ * Merges BQSR Recaliration tables.
+ */
+public final class BQSRGatherer extends Gatherer {
 
     private static final Logger logger = LogManager.getLogger(BQSRGatherer.class);
     private static final String EMPTY_INPUT_LIST = "list of inputs files is empty or there is no usable data in any input file";
@@ -60,15 +63,19 @@ public class BQSRGatherer extends Gatherer {
         RecalibrationReport generalReport = null;
         for (File input : inputs) {
             final RecalibrationReport inputReport = new RecalibrationReport(input, allReadGroups);
-            if( inputReport.isEmpty() ) { continue; }
+            if( inputReport.isEmpty() ) {
+                continue;
+            }
 
-            if (generalReport == null)
+            if (generalReport == null) {
                 generalReport = inputReport;
-            else
+            } else {
                 generalReport.combine(inputReport);
+            }
         }
-        if (generalReport == null)
+        if (generalReport == null) {
             throw new GATKException(EMPTY_INPUT_LIST);
+        }
 
         generalReport.calculateQuantizedQualities();
 
