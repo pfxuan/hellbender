@@ -12,14 +12,14 @@ import org.testng.annotations.Test;
 
 import java.util.Random;
 
-public class ReadCovariatesUnitTest {
+public final class ReadCovariatesUnitTest {
 
     @BeforeMethod
     public void init() {
         ReadCovariates.clearKeysCache();
     }
 
-    @Test(enabled = false)
+    @Test
     public void testCovariateGeneration() {
         final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
         final String RGID = "id";
