@@ -263,7 +263,7 @@ public final class FeatureDataSource<T extends Feature> implements GATKDataSourc
             }
 
             // Record our new start boundary
-            cachedInterval = new SimpleInterval(cachedInterval);
+            cachedInterval = new SimpleInterval(cachedInterval.getContig(), newStart, cachedInterval.getEnd());
         }
 
         /**
