@@ -13,6 +13,7 @@ import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ContextCovariate implements Covariate {
     private final static Logger logger = LogManager.getLogger(ContextCovariate.class);
@@ -29,7 +30,7 @@ public class ContextCovariate implements Covariate {
     // the maximum context size (number of bases) permitted; we need to keep the leftmost base free so that values are
     // not negative and we reserve 4 more bits to represent the length of the context; it takes 2 bits to encode one base.
     static final private int MAX_DNA_CONTEXT = 13;
-    private byte LOW_QUAL_TAIL;
+    private byte lowQualTail;
 
     // Initialize any member variables using the command-line arguments passed to the walkers
     @Override
@@ -44,7 +45,7 @@ public class ContextCovariate implements Covariate {
         if (indelsContextSize > MAX_DNA_CONTEXT)
             throw new UserException.BadArgumentValue("indels_context_size", String.format("context size cannot be bigger than %d, but was %d", MAX_DNA_CONTEXT, indelsContextSize));
 
-        LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
+        lowQualTail = RAC.LOW_QUAL_TAIL;
         
         if (mismatchesContextSize <= 0 || indelsContextSize <= 0)
             throw new UserException(String.format("Context size must be positive, if you don't want to use the context covariate, just turn it off instead. Mismatches: %d Indels: %d", mismatchesContextSize, indelsContextSize));
@@ -59,15 +60,16 @@ public class ContextCovariate implements Covariate {
         // store the original bases and then write Ns over low quality ones
         final byte[] originalBases = Arrays.copyOf(read.getReadBases(), read.getReadBases().length);
         // Write N's over the low quality tail of the reads to avoid adding them into the context
-        final SAMRecord clippedRead = ReadClipper.clipLowQualEnds(read, LOW_QUAL_TAIL, ClippingRepresentation.WRITE_NS);
+        final SAMRecord clippedRead = ReadClipper.clipLowQualEnds(read, lowQualTail, ClippingRepresentation.WRITE_NS);
         
         final boolean negativeStrand = clippedRead.getReadNegativeStrandFlag();
         byte[] bases = clippedRead.getReadBases();
-        if (negativeStrand)
+        if (negativeStrand) {
             bases = BaseUtils.simpleReverseComplement(bases);
+        }
 
-        final ArrayList<Integer> mismatchKeys = contextWith(bases, mismatchesContextSize, mismatchesKeyMask);
-        final ArrayList<Integer> indelKeys = contextWith(bases, indelsContextSize, indelsKeyMask);
+        final List<Integer> mismatchKeys = contextWith(bases, mismatchesContextSize, mismatchesKeyMask);
+        final List<Integer> indelKeys = contextWith(bases, indelsContextSize, indelsKeyMask);
 
         final int readLength = bases.length;
 
@@ -126,17 +128,19 @@ public class ContextCovariate implements Covariate {
      * @param contextSize context size to use building the context
      * @param mask        mask for pulling out just the context bits
      */
-    private static ArrayList<Integer> contextWith(final byte[] bases, final int contextSize, final int mask) {
+    private static List<Integer> contextWith(final byte[] bases, final int contextSize, final int mask) {
 
         final int readLength = bases.length;
-        final ArrayList<Integer> keys = new ArrayList<Integer>(readLength);
+        final List<Integer> keys = new ArrayList<>(readLength);
 
         // the first contextSize-1 bases will not have enough previous context
-        for (int i = 1; i < contextSize && i <= readLength; i++)
+        for (int i = 1; i < contextSize && i <= readLength; i++) {
             keys.add(-1);
+        }
 
-        if (readLength < contextSize)
+        if (readLength < contextSize) {
             return keys;
+        }
 
         final int newBaseOffset = 2 * (contextSize - 1) + LENGTH_BITS;
 

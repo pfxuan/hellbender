@@ -48,15 +48,14 @@ public class CycleCovariate implements Covariate {
             if (read.getReadNegativeStrandFlag()) {
                 cycle = readLength * readOrderFactor;
                 increment = -1 * readOrderFactor;
-            }
-            else {
+            } else {
                 cycle = readOrderFactor;
                 increment = readOrderFactor;
             }
 
             final int MAX_CYCLE_FOR_INDELS = readLength - CUSHION_FOR_INDELS - 1;
             for (int i = 0; i < readLength; i++) {
-                final int substitutionKey = keyFromCycle(cycle);
+                final int substitutionKey = keyFromCycle(cycle, MAXIMUM_CYCLE_VALUE);
                 final int indelKey = (i < CUSHION_FOR_INDELS || i > MAX_CYCLE_FOR_INDELS) ? -1 : substitutionKey;
                 values.addCovariate(substitutionKey, indelKey, indelKey, i);
                 cycle += increment;
@@ -85,15 +84,12 @@ public class CycleCovariate implements Covariate {
 
     @Override
     public String formatKey(final int key) {
-        int cycle = key >> 1; // shift so we can remove the "sign" bit
-        if ( (key & 1) != 0 ) // is the last bit set?
-            cycle *= -1; // then the cycle is negative
-        return String.format("%d", cycle);
+        return String.format("%d", cycleFromKey(key));
     }
 
     @Override
     public int keyFromValue(final Object value) {
-        return (value instanceof String) ? keyFromCycle(Integer.parseInt((String) value)) : keyFromCycle((Integer) value);
+        return (value instanceof String) ? keyFromCycle(Integer.parseInt((String) value), MAXIMUM_CYCLE_VALUE) : keyFromCycle((Integer) value, MAXIMUM_CYCLE_VALUE);
     }
 
     @Override
@@ -101,15 +97,31 @@ public class CycleCovariate implements Covariate {
         return (MAXIMUM_CYCLE_VALUE << 1) + 1;
     }
 
-    private int keyFromCycle(final int cycle) {
+    /**
+     * Decodes the cycle number from the key.
+     */
+    public static int cycleFromKey(int key) {
+        int cycle = key >> 1; // shift so we can remove the "sign" bit
+        if ( (key & 1) != 0 ) { // is the last bit set?
+            cycle *= -1; // then the cycle is negative
+        }
+        return cycle;
+    }
+
+    /**
+     * Encodes the cycle number as a key.
+     */
+    public static int keyFromCycle(final int cycle, final int maxCycle) {
         // no negative values because values must fit into the first few bits of the long
         int result = Math.abs(cycle);
-        if ( result > MAXIMUM_CYCLE_VALUE )
-            throw new UserException("The maximum allowed value for the cycle is " + MAXIMUM_CYCLE_VALUE + ", but a larger cycle (" + result + ") was detected.  Please use the --maximum_cycle_value argument to increase this value (at the expense of requiring more memory to run)");
+        if ( result > maxCycle ) {
+            throw new UserException("The maximum allowed value for the cycle is " + maxCycle + ", but a larger cycle (" + result + ") was detected.  Please use the --maximum_cycle_value argument to increase this value (at the expense of requiring more memory to run)");
+        }
 
         result = result << 1; // shift so we can add the "sign" bit
-        if ( cycle < 0 )
+        if ( cycle < 0 ) {
             result++; // negative cycles get the lower-most bit set
+        }
         return result;
     }
 }

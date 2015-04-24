@@ -82,4 +82,33 @@ public class CycleCovariateUnitTest {
         ReadCovariates readCovariates = new ReadCovariates(read.getReadLength(), 1);
         covariate.recordValues(read, readCovariates);
     }
+
+    private static int expectedCycleKey(final int baseNumber, final boolean isNegStrand, final boolean isSecondInPair, final int readLength, final boolean indel, final int maxCycle) {
+        final int readOrderFactor = isSecondInPair ? -1 : 1;
+        final int increment;
+        int cycle;
+        if (isNegStrand) {
+            cycle = readLength * readOrderFactor;
+            increment = -1 * readOrderFactor;
+        } else {
+            cycle = readOrderFactor;
+            increment = readOrderFactor;
+        }
+
+        cycle = cycle + baseNumber * increment;
+        if (indel) {
+            final int MAX_CYCLE_FOR_INDELS = readLength - CycleCovariate.CUSHION_FOR_INDELS - 1;
+            if ((baseNumber < CycleCovariate.CUSHION_FOR_INDELS || baseNumber > MAX_CYCLE_FOR_INDELS)) {
+                return -1;
+            } else {
+                return CycleCovariate.keyFromCycle(cycle, maxCycle);
+            }
+        }
+        return CycleCovariate.keyFromCycle(cycle, maxCycle);
+    }
+
+    public static int expectedCycle(SAMRecord read, final int baseNumber, final boolean indel, final int maxCycle) {
+        final int key = expectedCycleKey(baseNumber, read.getReadNegativeStrandFlag(), read.getReadPairedFlag() && read.getSecondOfPairFlag(), read.getReadLength(), indel, maxCycle);
+        return CycleCovariate.cycleFromKey(key);
+    }
 }
