@@ -1,4 +1,4 @@
-package org.broadinstitute.hellbender.utils;
+ package org.broadinstitute.hellbender.utils;
 
 
 import htsjdk.samtools.util.Locatable;
@@ -27,6 +27,26 @@ public final class SimpleInterval implements Locatable {
      * @param end  1-based inclusive end position
      */
     public SimpleInterval(final String contig, final int start, final int end){
+        validatePositions(contig, start, end);
+        this.contig = contig;
+        this.start = start;
+        this.end = end;
+    }
+
+    /**
+     * Create a new SimpleInterval from a {@link Locatable}
+     * @param locatable any Locatable
+     * @throws IllegalArgumentException if locatable doesn't respect the SimpleInterval conventions
+     */
+    public SimpleInterval(final Locatable locatable){
+        this(locatable.getContig(), locatable.getStart(), locatable.getEnd());
+    }
+
+    /**
+     * Test that these are valid value for construcing a SimpleInterval
+     * @throws IllegalArgumentException if it is invalid
+     */
+    private static void validatePositions(final String contig, final int start, final int end) {
         if ( contig == null ) {
             throw new IllegalArgumentException("contig cannot be null");
         }
@@ -36,9 +56,6 @@ public final class SimpleInterval implements Locatable {
         if ( end < start ) {
             throw new IllegalArgumentException(String.format("end must be >= start. start:%d end:%d", start, end));
         }
-        this.contig = contig;
-        this.start = start;
-        this.end = end;
     }
 
     /**
@@ -95,6 +112,7 @@ public final class SimpleInterval implements Locatable {
             }
         }
 
+        validatePositions(contig, start, end);
         this.contig = contig;
         this.start = start;
         this.end = end;

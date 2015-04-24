@@ -1,5 +1,8 @@
 package org.broadinstitute.hellbender.utils;
 
+import htsjdk.samtools.util.Locatable;
+import htsjdk.tribble.Feature;
+import htsjdk.tribble.SimpleFeature;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -149,6 +152,17 @@ public class SimpleIntervalUnitTest extends BaseTest {
                 { containingInterval, null, false },
                 { containingInterval, containingInterval, true }
         };
+    }
+
+    @Test
+    public void testCreateFromLocatable(){
+        Feature feature = new SimpleFeature("1", 10, 100);
+        SimpleInterval interval = new SimpleInterval(feature);
+
+        Assert.assertEquals(interval.getContig(), feature.getContig());
+        Assert.assertEquals(interval.getStart(), feature.getStart());
+        Assert.assertEquals(interval.getEnd(), feature.getEnd());
+
     }
 
     @Test(dataProvider = "IntervalContainsData")

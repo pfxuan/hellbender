@@ -263,7 +263,7 @@ public final class FeatureDataSource<T extends Feature> implements GATKDataSourc
             }
 
             // Record our new start boundary
-            cachedInterval = new SimpleInterval(cachedInterval.getContig(), newStart, cachedInterval.getEnd());
+            cachedInterval = new SimpleInterval(cachedInterval);
         }
 
         /**
@@ -647,7 +647,7 @@ public final class FeatureDataSource<T extends Feature> implements GATKDataSourc
          * @return true if we haven't seen the Feature before on this iteration, otherwise false
          */
         private boolean featureIsNovel( final T feature ) {
-            return previousInterval == null || ! previousInterval.overlaps(new SimpleInterval(feature.getContig(), feature.getStart(), feature.getEnd()));
+            return previousInterval == null || ! previousInterval.overlaps(new SimpleInterval(feature));
         }
 
         /**
