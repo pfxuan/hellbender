@@ -3,8 +3,6 @@ package org.broadinstitute.hellbender.utils.read;
 import htsjdk.samtools.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.NGSPlatform;
@@ -17,8 +15,6 @@ import java.util.*;
  * Static methods only, please.
  */
 public class ReadUtils {
-    private final static Logger logger = LogManager.getLogger(ReadUtils.class);
-
     private ReadUtils() {
     }
 
