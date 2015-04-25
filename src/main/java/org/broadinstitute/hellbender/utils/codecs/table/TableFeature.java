@@ -70,6 +70,14 @@ public final class TableFeature implements Feature {
         return this.position;
     }
 
+    public List<String> getAllValues() {
+        return getValuesTo(values.size());
+    }
+
+    public List<String> getValuesTo(int columnPosition) {
+        return values.subList(0, columnPosition);
+    }
+
     public List<String> getHeader() {
         return keys;
     }
