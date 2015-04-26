@@ -375,7 +375,7 @@ public class IOUtils {
                 return new FileReader(file);
             }
         } catch (IOException e){
-            throw new GATKException("Cannot open file " + file, e);
+            throw new GATKException("Cannot open file " + file.getAbsolutePath(), e);
         }
     }
 
@@ -390,7 +390,7 @@ public class IOUtils {
                 return new PrintStream(file);
             }
         } catch (IOException e){
-            throw new GATKException("Cannot open file " + file, e);
+            throw new GATKException("Cannot open file " + file.getAbsolutePath(), e);
         }
     }
 }

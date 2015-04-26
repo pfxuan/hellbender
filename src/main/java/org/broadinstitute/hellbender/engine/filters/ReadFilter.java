@@ -16,7 +16,11 @@ public interface ReadFilter extends Predicate<SAMRecord> {
         return Predicate.super.or(filter)::test;
     }
 
+    @Override
     default ReadFilter negate(){
         return Predicate.super.negate()::test;
     }
+
+    @Override
+    boolean test(SAMRecord read);
 }
