@@ -4,7 +4,6 @@ import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.SAMRecord;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +11,7 @@ import java.util.List;
 import java.util.Stack;
 
 public final class CigarUtils {
+    private CigarUtils(){}
 
     /**
      * Combines equal adjacent elements of a Cigar object
@@ -103,22 +103,34 @@ public final class CigarUtils {
         return false;
     }
 
+    /**
+     * Compute the number of reference bases between the start (inclusive) and end (exclusive) cigar elements.
+     */
+    @SuppressWarnings("fallthru")
     public static int countRefBasesBasedOnCigar(final SAMRecord read, final int cigarStartIndex, final int cigarEndIndex){
+        if (read == null){
+            throw new IllegalArgumentException("null read");
+        }
+        final List<CigarElement> elems = read.getCigar().getCigarElements();
+        if (cigarStartIndex < 0 || cigarEndIndex > elems.size() || cigarStartIndex > cigarEndIndex){
+            throw new IllegalArgumentException("invalid index:" + 0 + " -" + elems.size());
+        }
         int result = 0;
-        for(int i = cigarStartIndex; i<cigarEndIndex;i++){
-            final CigarElement cigarElement = read.getCigar().getCigarElement(i);
+        for(int i = cigarStartIndex; i < cigarEndIndex; i++){
+            final CigarElement cigarElement = elems.get(i);
             switch (cigarElement.getOperator()) {
                 case M:
-                case S:
                 case D:
                 case N:
-                case H:
+                case EQ:
+                case X:
+                case S:        //TODO is this correct? CigarOperator.consumesReferenceBases is false
+                case P:        //TODO is this correct? CigarOperator.consumesReferenceBases is false
+                case H:        //TODO is this correct? CigarOperator.consumesReferenceBases is false
                     result += cigarElement.getLength();
                     break;
-                case I:
+                default://I
                     break;
-                default:
-                    throw new GATKException("Unsupported cigar operator: " + cigarElement.getOperator());
             }
         }
         return result;

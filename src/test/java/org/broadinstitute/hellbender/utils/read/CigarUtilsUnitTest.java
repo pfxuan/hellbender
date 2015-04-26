@@ -147,6 +147,66 @@ public final class CigarUtilsUnitTest {
         final boolean actual = CigarUtils.containsNOperator(cigarIn);
         Assert.assertEquals(actual, expected, cigarStrIn);
     }
-//    isCigarValid
-//    countRefBasesBasedOnCigar
+
+    @DataProvider(name = "testData_countRefBasesBasedOnCigar")
+    public Iterator<Object[]> testData_countRefBasesBasedOnCigar(final Method testMethod) {
+        final Object[][] TEST_CIGARS = {
+                {"10M", 0, 1, 10},
+                {"10M1D", 0, 1, 10},
+                {"10M1D1S", 0, 1, 10},
+                {"10M1D1N1S", 0, 1, 10},
+                {"10M1D1N1S1H", 0, 1, 10},
+                {"10M", 0, 1, 10},
+                {"10M1D", 0, 2, 11},
+                {"10M1D1S", 0, 2, 11},
+                {"10M1D1N1S", 0, 2, 11},
+                {"10M1D1N1S1H", 0, 2, 11},
+                {"10M1=1X1S", 0, 2, 11},
+                {"10M1=1X1S1H", 0, 2, 11},
+                {"10M1D2N4S", 1, 3, 3},
+                {"10M1D2N4S8H", 1, 4, 7},
+                {"10M1I2N4S", 1, 3, 2},
+                {"10M1I2N4S8H", 1, 4, 6},
+
+                //TODO are these correct? CigarOperator.consumesReferenceBases is false
+                //https://github.com/broadinstitute/hellbender/issues/450
+                {"1M1S1H1H", 1, 2, 1},
+                {"1M1P1H1H", 1, 2, 1},
+                {"1M1H1H1H", 1, 2, 1},
+        };
+        final List<Object[]> result = new LinkedList<>();
+        Collections.addAll(result, TEST_CIGARS);
+        return result.iterator();
+    }
+
+    @Test(dataProvider = "testData_countRefBasesBasedOnCigar")
+    public void testCountRefBasesBasedOnCigar(final String cigarStrIn, final int start, final int end, final int expected){
+        final SAMRecord read = ReadClipperTestUtils.makeReadFromCigar(cigarStrIn);
+        final int actual = CigarUtils.countRefBasesBasedOnCigar(read, start, end);
+        Assert.assertEquals(actual, expected, cigarStrIn);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCountRefBasesBasedOnCigarNull(){
+        CigarUtils.countRefBasesBasedOnCigar(null, 1, 2);
+    }
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCountRefBasesBasedOnCigarStart1(){
+        final String cigarStrIn = "1M1=1X";
+        final SAMRecord read = ReadClipperTestUtils.makeReadFromCigar(cigarStrIn);
+        CigarUtils.countRefBasesBasedOnCigar(read, -1, 1);
+    }
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCountRefBasesBasedOnCigarStart2(){
+        final String cigarStrIn = "1M1=1X";
+        final SAMRecord read = ReadClipperTestUtils.makeReadFromCigar(cigarStrIn);
+        CigarUtils.countRefBasesBasedOnCigar(read, 2, 1);
+    }
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCountRefBasesBasedOnCigarEnd2(){
+        final String cigarStrIn = "1M1=1X";
+        final SAMRecord read = ReadClipperTestUtils.makeReadFromCigar(cigarStrIn);
+        CigarUtils.countRefBasesBasedOnCigar(read, 1, 6);
+    }
+
 }
