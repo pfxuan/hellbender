@@ -320,7 +320,7 @@ public final class ReadClipperUnitTest extends BaseTest {
      * @param clipped clipped read
      */
     private void assertUnclippedLimits(SAMRecord original, SAMRecord clipped) {
-        if (CigarUtils.readHasNonClippedBases(clipped)) {
+        if (CigarUtils.hasNonClippedBases(clipped.getCigar())) {
             Assert.assertEquals(original.getUnclippedStart(), clipped.getUnclippedStart());
             Assert.assertEquals(original.getUnclippedEnd(), clipped.getUnclippedEnd());
         }

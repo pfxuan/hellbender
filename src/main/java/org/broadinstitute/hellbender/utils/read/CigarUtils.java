@@ -1,12 +1,17 @@
 package org.broadinstitute.hellbender.utils.read;
 
-import htsjdk.samtools.*;
+import htsjdk.samtools.Cigar;
+import htsjdk.samtools.CigarElement;
+import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
 
-public class CigarUtils {
+public final class CigarUtils {
 
     /**
      * Combines equal adjacent elements of a Cigar object
@@ -40,30 +45,21 @@ public class CigarUtils {
     }
 
     /**
-     * Checks whether or not the read has any cigar element that is not H or S
-     *
-     * @param read the read
-     * @return true if it has any M, I or D, false otherwise
+     * Checks whether the cigar has any element that is not H or S
+     * @return true the cigar has elements other than S or H, false otherwise.
      */
-    public static boolean readHasNonClippedBases(SAMRecord read) {
-        for (CigarElement cigarElement : read.getCigar().getCigarElements())
-            if (cigarElement.getOperator() != CigarOperator.SOFT_CLIP && cigarElement.getOperator() != CigarOperator.HARD_CLIP)
-                return true;
-        return false;
+    public static boolean hasNonClippedBases(Cigar cigar) {
+        return cigar.getCigarElements().stream().anyMatch(el -> el.getOperator() != CigarOperator.SOFT_CLIP && el.getOperator() != CigarOperator.HARD_CLIP);
     }
 
-    public static Cigar invertCigar (Cigar cigar) {
-        Stack<CigarElement> cigarStack = new Stack<>();
-        for (CigarElement cigarElement : cigar.getCigarElements()) {
-            cigarStack.push(cigarElement);
-        }
-
-        Cigar invertedCigar = new Cigar();
-        while (!cigarStack.isEmpty()) {
-            invertedCigar.add(cigarStack.pop());
-        }
-
-        return invertedCigar;
+    /**
+     * Inverts the order of the operators in the cigar.
+     * Eg 10M1D20M -> 20M1D10M
+     */
+    public static Cigar invertCigar (final Cigar cigar) {
+        final List<CigarElement>  els = new ArrayList<>(cigar.getCigarElements());
+        Collections.reverse(els);
+        return new Cigar(els);
     }
 
     /**
@@ -107,7 +103,7 @@ public class CigarUtils {
         return false;
     }
 
-    public static final int countRefBasesBasedOnCigar(final SAMRecord read, final int cigarStartIndex, final int cigarEndIndex){
+    public static int countRefBasesBasedOnCigar(final SAMRecord read, final int cigarStartIndex, final int cigarEndIndex){
         int result = 0;
         for(int i = cigarStartIndex; i<cigarEndIndex;i++){
             final CigarElement cigarElement = read.getCigar().getCigarElement(i);
@@ -128,8 +124,11 @@ public class CigarUtils {
         return result;
     }
 
-    public static Cigar unclipCigar(Cigar cigar) {
-        ArrayList<CigarElement> elements = new ArrayList<>(cigar.numCigarElements());
+    /**
+     * Removes all clipping operators from the cigar.
+     */
+    public static Cigar unclipCigar(final Cigar cigar) {
+        final List<CigarElement> elements = new ArrayList<>(cigar.numCigarElements());
         for ( CigarElement ce : cigar.getCigarElements() ) {
             if ( !isClipOperator(ce.getOperator()) )
                 elements.add(ce);
@@ -137,36 +136,60 @@ public class CigarUtils {
         return new Cigar(elements);
     }
 
-    private static boolean isClipOperator(CigarOperator op) {
+    private static boolean isClipOperator(final CigarOperator op) {
         return op == CigarOperator.S || op == CigarOperator.H || op == CigarOperator.P;
     }
 
-    public static Cigar reclipCigar(Cigar cigar, SAMRecord read) {
-        ArrayList<CigarElement> elements = new ArrayList<>();
+    private static boolean isClipOperator(final CigarElement el) {
+        return isClipOperator(el.getOperator());
+    }
+
+    /**
+     * Given a cigar1 and a read with cigar2,
+     * this method creates cigar3 such that it has flanking clip operators from cigar2
+     * and it has all operators from cigar1 in the middle.
+     *
+     * In other words if:
+     * cigar2 = leftClip2 + noclips2 + rightClip2
+     *
+     * then
+     * cigar3 = leftClip2 + cigar1 + rightClip2
+     */
+    public static Cigar reclipCigar(final Cigar cigar, final SAMRecord read) {
+        final List<CigarElement> elements = new ArrayList<>();
 
         int i = 0;
-        int n = read.getCigar().numCigarElements();
-        while ( i < n && isClipOperator(read.getCigar().getCigarElement(i).getOperator()) )
-            elements.add(read.getCigar().getCigarElement(i++));
+        final Cigar readCigar = read.getCigar();
+        final int n = readCigar.numCigarElements();
+        final List<CigarElement> readEls = readCigar.getCigarElements();
+
+        //copy head clips
+        while ( i < n && isClipOperator(readEls.get(i)) ) {
+            elements.add(readEls.get(i));
+            i++;
+        }
 
         elements.addAll(cigar.getCigarElements());
 
+        //skip over non-clips
         i++;
-        while ( i < n && !isClipOperator(read.getCigar().getCigarElement(i).getOperator()) )
+        while ( i < n && !isClipOperator(readEls.get(i)) ) {
             i++;
+        }
 
-        while ( i < n && isClipOperator(read.getCigar().getCigarElement(i).getOperator()) )
-            elements.add(read.getCigar().getCigarElement(i++));
+        //copy tail clips
+        while ( i < n && isClipOperator(readEls.get(i)) ) {
+            elements.add(readEls.get(i));
+            i++;
+        }
 
         return new Cigar(elements);
     }
 
+    /**
+     * Returns whether the cigar has any N operators.
+     */
     public static boolean containsNOperator(final Cigar cigar) {
-        for (final CigarElement ce : cigar.getCigarElements()) {
-            if (ce.getOperator() == CigarOperator.N) {
-                return true;
-            }
-        }
-        return false;
+        return cigar.getCigarElements().stream().anyMatch(el -> el.getOperator() == CigarOperator.N);
     }
 }
