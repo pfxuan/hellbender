@@ -48,7 +48,10 @@ public final class CigarUtils {
      * Checks whether the cigar has any element that is not H or S
      * @return true the cigar has elements other than S or H, false otherwise.
      */
-    public static boolean hasNonClippedBases(Cigar cigar) {
+    public static boolean hasNonClippedBases(final Cigar cigar) {
+        if (cigar == null){
+            throw new IllegalArgumentException("null cigar");
+        }
         return cigar.getCigarElements().stream().anyMatch(el -> el.getOperator() != CigarOperator.SOFT_CLIP && el.getOperator() != CigarOperator.HARD_CLIP);
     }
 
@@ -57,6 +60,9 @@ public final class CigarUtils {
      * Eg 10M1D20M -> 20M1D10M
      */
     public static Cigar invertCigar (final Cigar cigar) {
+        if (cigar == null){
+            throw new IllegalArgumentException("null cigar");
+        }
         final List<CigarElement>  els = new ArrayList<>(cigar.getCigarElements());
         Collections.reverse(els);
         return new Cigar(els);
@@ -140,6 +146,9 @@ public final class CigarUtils {
      * Removes all clipping operators from the cigar.
      */
     public static Cigar unclipCigar(final Cigar cigar) {
+        if (cigar == null){
+            throw new IllegalArgumentException("null cigar");
+        }
         final List<CigarElement> elements = new ArrayList<>(cigar.numCigarElements());
         for ( CigarElement ce : cigar.getCigarElements() ) {
             if ( !isClipOperator(ce.getOperator()) )
@@ -168,6 +177,10 @@ public final class CigarUtils {
      * cigar3 = leftClip2 + cigar1 + rightClip2
      */
     public static Cigar reclipCigar(final Cigar cigar, final SAMRecord read) {
+        if (cigar == null || read == null){
+            throw new IllegalArgumentException("null argument");
+        }
+
         final List<CigarElement> elements = new ArrayList<>();
 
         int i = 0;
@@ -202,6 +215,9 @@ public final class CigarUtils {
      * Returns whether the cigar has any N operators.
      */
     public static boolean containsNOperator(final Cigar cigar) {
+        if (cigar == null){
+            throw new IllegalArgumentException("null cigar");
+        }
         return cigar.getCigarElements().stream().anyMatch(el -> el.getOperator() == CigarOperator.N);
     }
 }
