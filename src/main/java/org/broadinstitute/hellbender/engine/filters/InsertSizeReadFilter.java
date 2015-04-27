@@ -7,7 +7,7 @@ import org.broadinstitute.hellbender.cmdline.Argument;
  * Keep reads that are within a given max insert size.
  */
 public final class InsertSizeReadFilter implements ReadFilter {
-    @Argument(fullName = "maxInsertSize", shortName = "maxInsert", doc="Keep reads with insert size within than the specified value", optional=true)
+    @Argument(fullName = "maxInsertSize", shortName = "maxInsert", doc="Keep only read pairs with insert size at most equal to the given value", optional=true)
     public int maxInsertSize = 1000000;
 
     @Override

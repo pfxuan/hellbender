@@ -29,12 +29,16 @@ public final class ReadGroupBlackListReadFilter implements ReadFilter {
      * will load blacklist from that file. This scheme works recursively
      * (ie the file may contain names of further files etc).
      */
-    public ReadGroupBlackListReadFilter(final List<String> blackLists) throws IOException {
-        final Map<String, Collection<String>> filters = new TreeMap<>();
-        for (String blackList : blackLists) {
-            addFilter(filters, blackList, null, 0);
-        }
-        this.blacklistEntries = filters.entrySet();
+    public ReadGroupBlackListReadFilter(final List<String> blackLists) {
+            final Map<String, Collection<String>> filters = new TreeMap<>();
+            for (String blackList : blackLists) {
+                try {
+                    addFilter(filters, blackList, null, 0);
+                } catch (IOException e) {
+                    throw new UserException("Incorrect blacklist:" + blackList, e);
+                }
+            }
+            this.blacklistEntries = filters.entrySet();
     }
 
     private void addFilter(final Map<String, Collection<String>> filters, final String filter, final File parentFile, final int parentLineNum) throws IOException {
@@ -46,12 +50,18 @@ public final class ReadGroupBlackListReadFilter implements ReadFilter {
     }
 
     private void addFiltersFromString(final Map<String, Collection<String>> filters, final String filter, final File parentFile, final int parentLineNum) {
-        final String[] keyValuePair = filter.split(FILTER_ENTRY_SEPARATOR, 2);
+        final String[] split = filter.split(FILTER_ENTRY_SEPARATOR, 2);
+        checkValidFilterEntry(filter, parentFile, parentLineNum, split);
 
+        //Note: if we're here, we know that split has exactly 2 elements.
+        filters.computeIfAbsent(split[0], k -> new TreeSet<>()).add(split[1]);
+    }
+
+    private void checkValidFilterEntry(String filter, File parentFile, int parentLineNum, String[] split) {
         String message = null;
-        if (keyValuePair.length != 2) {
+        if (split.length != 2) {
             message = "Invalid read group filter: " + filter;
-        } else if (keyValuePair[0].length() != 2) {
+        } else if (split[0].length() != 2) {
             message = "Tag is not two characters: " + filter;
         }
 
@@ -62,11 +72,6 @@ public final class ReadGroupBlackListReadFilter implements ReadFilter {
             message += ", format is <TAG>:<SUBSTRING>";
             throw new UserException(message);
         }
-
-        if (!filters.containsKey(keyValuePair[0])) {
-            filters.put(keyValuePair[0], new TreeSet<>());
-        }
-        filters.get(keyValuePair[0]).add(keyValuePair[1]);
     }
 
     private void addFiltersFromFile(final Map<String, Collection<String>> filters, final String fileName) throws IOException {

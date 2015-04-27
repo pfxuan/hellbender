@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.engine.filters;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
 import htsjdk.samtools.SAMRecord;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.read.ArtificialSAMUtils;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
@@ -36,7 +35,7 @@ public class ReadGroupBlackListReadFilterUnitTest extends BaseTest {
         new ReadGroupBlackListReadFilter(badFilters);
     }
 
-    @Test(expectedExceptions=GATKException.class)
+    @Test(expectedExceptions=UserException.class)
     public void testBadFilterFile() throws IOException {
         List<String> badFilters = Collections.singletonList("/foo/bar/rgbl.txt");
         new ReadGroupBlackListReadFilter(badFilters);

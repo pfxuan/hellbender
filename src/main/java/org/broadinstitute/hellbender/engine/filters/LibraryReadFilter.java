@@ -5,7 +5,7 @@ import htsjdk.samtools.SAMRecord;
 import org.broadinstitute.hellbender.cmdline.Argument;
 
 /**
- * Keep use reads from the specified library.
+ * Keep only reads from the specified library.
  */
 public final class LibraryReadFilter implements ReadFilter {
     @Argument(fullName = "library", shortName = "library", doc="The name of the library to keep", optional=false)

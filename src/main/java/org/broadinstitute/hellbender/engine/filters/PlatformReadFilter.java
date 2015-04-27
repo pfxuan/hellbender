@@ -7,7 +7,7 @@ import org.broadinstitute.hellbender.cmdline.Argument;
 import java.util.Set;
 
 /**
- * Keep matching reads that match th PL attribute.
+ * Keep only reads that match th PL attribute.
  * Matching is done by case-insensitive substring matching
  * (checking if the read's platform tag contains the given string).
  */
